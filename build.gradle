@@ -1,0 +1,99 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+plugins {
+	id 'fabric-loom' version '1.3-SNAPSHOT'
+	id 'maven-publish'
+  	id "org.jetbrains.kotlin.jvm" version "1.9.0"
+}
+
+base {
+	version = project.mod_version + '-fabric-' + project.minecraft_version
+	group = project.maven_group
+	archivesName = project.mod_id
+}
+
+repositories {
+	maven { url 'https://jitpack.io' }
+}
+
+sourceSets {
+	main {
+		resources { srcDirs 'src/generated/resources' }
+	}
+
+	test {
+		compileClasspath += sourceSets.main.compileClasspath
+		runtimeClasspath += sourceSets.main.runtimeClasspath
+	}
+}
+
+loom {
+	runs {
+		datagen {
+			inherit server
+			name "Data Generation"
+			vmArg "-Dfabric-api.datagen"
+			vmArg "-Dfabric-api.datagen.output-dir=${file('src/generated/resources')}"
+			vmArg "-Dfabric-api.datagen.modid=${project.mod_id}"
+ 
+			runDir "build/datagen"
+		}
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+
+	modImplementation "net.fabricmc:fabric-loader:${project.fabric_loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	modImplementation "net.fabricmc:fabric-language-kotlin:${project.fabric_kotlin_version}"
+}
+
+processResources {
+	inputs.property "version", project.version
+
+	filesMatching(["modid.mixins.json", "fabric.mod.json", "pack.mcmeta"]) {
+		Map<String, ?> properties = project.properties.clone() as Map<String, ?>
+		expand properties
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 17
+}
+
+tasks.withType(KotlinCompile).all {
+	kotlinOptions {
+		jvmTarget = project.java_target
+	}
+}
+
+java {
+	withSourcesJar()
+
+	sourceCompatibility = JavaLanguageVersion.of(project.java_target)
+	targetCompatibility = JavaLanguageVersion.of(project.java_target)
+}
+
+jar {
+	from("LICENSE") {
+		rename { "${it}_${project.base.archivesName.get()}"}
+	}
+}
+
+// configure the maven publication
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			from components.java
+		}
+	}
+
+	repositories {
+		// Add repositories to publish to here.
+		// Notice: This block does NOT have the same function as the block in the top level.
+		// The repositories here will be used for publishing your artifact, not for
+		// retrieving dependencies.
+	}
+}
