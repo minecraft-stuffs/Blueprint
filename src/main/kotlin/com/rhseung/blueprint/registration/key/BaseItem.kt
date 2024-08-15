@@ -1,19 +1,31 @@
 package com.rhseung.blueprint.registration.key
 
+import com.google.common.collect.ImmutableList
+import com.mojang.serialization.Codec
 import com.rhseung.blueprint.file.Loc
 import com.rhseung.blueprint.registration.IBaseKey
-import com.rhseung.blueprint.registration.Lang
+import com.rhseung.blueprint.registration.Translation
+import com.rhseung.blueprint.util.Functional.ifNotNull
 import com.rhseung.blueprint.util.Languages
 import com.rhseung.blueprint.util.Languages.LanguageTable
-import com.rhseung.blueprint.util.Functional.ifNotNull
 import com.rhseung.blueprint.util.Utils.langcase
-import com.rhseung.blueprint.util.Utils.titlecase
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents
+import net.minecraft.block.jukebox.JukeboxSong
+import net.minecraft.component.ComponentMap
+import net.minecraft.component.ComponentType
+import net.minecraft.component.DataComponentTypes
+import net.minecraft.component.type.AttributeModifiersComponent
+import net.minecraft.entity.effect.StatusEffectInstance
 import net.minecraft.item.Item
+import net.minecraft.item.ItemConvertible
+import net.minecraft.network.RegistryByteBuf
+import net.minecraft.network.codec.PacketCodec
 import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
+import net.minecraft.registry.RegistryKey
 import net.minecraft.resource.featuretoggle.FeatureFlag
 import net.minecraft.util.Rarity
+import net.minecraft.component.type.FoodComponent as FoodComponent1
 
 class BaseItem(
     /**
@@ -108,6 +120,15 @@ class BaseItem(
         }
 
         /**
+         * The jukebox song that the item can play. default is null.
+         */
+        internal var jukeboxPlayable: RegistryKey<JukeboxSong>? = null
+
+        fun jukeboxPlayable(value: () -> RegistryKey<JukeboxSong>) {
+            this.jukeboxPlayable = value()
+        }
+
+        /**
          * The required features for the item. default is [FeatureFlags.VANILLA_FEATURES].
          */
         internal var requiredFeatures: Array<FeatureFlag> = arrayOf()
@@ -138,8 +159,144 @@ class BaseItem(
          */
         internal val langs = LanguageTable()
 
-        fun lang(value: () -> Lang) {
+        fun lang(value: () -> Translation) {
             langs[value().language] = value().translation
+        }
+
+        /**
+         * Adds a component to the item.
+         */
+        internal val components: ComponentMap.Builder = ComponentMap.builder().addAll(DataComponentTypes.DEFAULT_ITEM_COMPONENTS);
+
+        class ComponentBuilder<T : Any> {
+            private var codec: Codec<T>? = null;
+            private var packetCodec: PacketCodec<in RegistryByteBuf, T>? = null;
+            private var cache: Boolean = false;
+            
+            companion object {
+                fun <T : Any> builder(value: Any, block: ComponentBuilder<T>.() -> Unit): ComponentType<T> {
+                    return ComponentBuilder<T>().apply(block).build();
+                }
+            }
+
+            fun codec(value: () -> Codec<T>) {
+                 this.codec = value()
+            }
+
+            fun packetCodec(value: () -> PacketCodec<in RegistryByteBuf, T>) {
+                this.packetCodec = value()
+            }
+
+            fun cache(value: () -> Boolean) {
+                this.cache = value()
+            }
+
+            fun build(): ComponentType<T> {
+                return ComponentType.Builder<T>()
+                    .codec(codec)
+                    .packetCodec(packetCodec)
+                    .apply {
+                        if (cache)
+                            cache()
+                    }
+                    .build();
+            }
+        }
+
+        private fun <T : Any> component(component: ComponentType<T>, value: T) {
+            components.add(component, value);
+        }
+
+        fun <T : Any> componentBuilder(value: T, block: ComponentBuilder<T>.() -> Unit) {
+            val component = ComponentBuilder<T>().apply(block).build();
+            components.add(component, value);
+        }
+
+        fun <T : Any> component(type: ComponentType<T>, lambda: () -> T) {
+            components.add(type, lambda());
+        }
+
+        /**
+         * Adds an [AttributeModifiersComponent] to the item.
+         */
+        fun attributeModifier(value: () -> AttributeModifiersComponent) {
+            component(DataComponentTypes.ATTRIBUTE_MODIFIERS, value());
+        }
+
+        class FoodBuilder {
+            private var hunger: Int = 0;
+            private var saturationModifier: Float = 0.0F;
+            private var canAlwaysEat: Boolean = false;
+            private var eatTime: Float = 1.6F;
+            private var usingConvertsTo: ItemConvertible? = null;
+            private var effects: ImmutableList.Builder<Pair<StatusEffectInstance, Float>> = ImmutableList.builder();
+
+            companion object {
+                fun builder(block: FoodBuilder.() -> Unit): FoodComponent1 {
+                    return FoodBuilder().apply(block).build();
+                }
+            }
+
+            fun hunger(value: () -> Int) {
+                this.hunger = value();
+            }
+
+            fun saturationModifier(value: () -> Float) {
+                this.saturationModifier = value();
+            }
+
+            fun canAlwaysEat(value: () -> Boolean) {
+                this.canAlwaysEat = value();
+            }
+
+            fun eatTime(value: () -> Float) {
+                this.eatTime = value();
+            }
+
+            fun usingConvertsTo(value: () -> ItemConvertible) {
+                this.usingConvertsTo = value();
+            }
+
+            class EffectListBuilder {
+                private val effects: MutableList<Pair<StatusEffectInstance, Float>> = mutableListOf();
+
+                operator fun Pair<StatusEffectInstance, Float>.unaryPlus() {
+                    effects.add(this);
+                }
+
+                fun build(): ImmutableList<Pair<StatusEffectInstance, Float>> {
+                    return ImmutableList.copyOf(effects);
+                }
+            }
+
+            fun effects(block: EffectListBuilder.() -> Unit) {
+                val builder = EffectListBuilder().apply(block);
+                this.effects.addAll(builder.build());
+            }
+
+            fun build(): FoodComponent1 {
+                return FoodComponent1.Builder()
+                    .nutrition(hunger)
+                    .saturationModifier(saturationModifier)
+                    .usingConvertsTo(usingConvertsTo)
+                    .apply {
+                        if (canAlwaysEat)
+                            alwaysEdible()
+
+                        val built = effects.build();
+                        val iterator = built.iterator();
+                        while (iterator.hasNext()) {
+                            val entry = iterator.next();
+                            statusEffect(entry.first, entry.second);
+                        }
+                    }
+                    .build();
+            }
+        }
+
+        fun food(block: FoodBuilder.() -> Unit) {
+            val food = FoodBuilder.builder(block);
+            component(DataComponentTypes.FOOD, food);
         }
 
         /**
@@ -154,6 +311,15 @@ class BaseItem(
                 .apply {
                     if (fireproof)
                         fireproof()
+                    if (jukeboxPlayable != null)
+                        jukeboxPlayable(jukeboxPlayable)
+
+                    val built = components.build();
+                    val iterator = built.iterator();
+                    while (iterator.hasNext()) {
+                        val entry = iterator.next();
+                        component(entry.type as ComponentType<Any>, entry.value);
+                    }
                 }
         }
     }

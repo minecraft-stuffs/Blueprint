@@ -1,4 +1,4 @@
-package com.rhseung.blueprint.render.model
+package com.rhseung.blueprint.file
 
 object TextureType {
     val ALL = "all"

@@ -1,0 +1,6 @@
+// 1.20.1	2024-08-09T12:14:23.723746	Blueprint/Model Definitions
+7343e07ca346e65c0b5610d0f2d60e392cbbb933 assets\blueprint\models\item\example_item.json
+bebd4dbdada5c894c6ae51a056d3c20aef60d3f0 assets\blueprint\models\item\example_ore.json
+62225e1848a363025b104c8b27553519cfaa9cc4 assets\blueprint\blockstates\example_ore.json
+1ea0479925302b67fdd35c23b9efba9d0dfde95f assets\blueprint\models\block\example_ore.json
+16c6c66294ddc3d622acca7f62ea4a3ad76bde5b assets\blueprint\models\item\blueprint.json

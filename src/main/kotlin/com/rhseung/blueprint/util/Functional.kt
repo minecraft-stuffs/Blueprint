@@ -1,8 +1,8 @@
 package com.rhseung.blueprint.util
 
 object Functional {
-    fun Boolean.ifElse(ifTrue: Any?, ifFalse: Any?): Any? {
-        return if (this) ifTrue else ifFalse
+    fun <T> Boolean.ifElse(`true`: T, `false`: T): T {
+        return if (this) `true` else `false`
     }
 
     inline fun Boolean.ifTrue(run: () -> Unit) {

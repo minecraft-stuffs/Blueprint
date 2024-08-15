@@ -2,12 +2,11 @@ package com.rhseung.blueprint.registration.key
 
 import com.rhseung.blueprint.file.Loc
 import com.rhseung.blueprint.registration.IBaseKey
-import com.rhseung.blueprint.registration.Lang
+import com.rhseung.blueprint.registration.Translation
 import com.rhseung.blueprint.util.Functional.ifNotNull
 import com.rhseung.blueprint.util.Languages
 import com.rhseung.blueprint.util.Languages.LanguageTable
 import com.rhseung.blueprint.util.Utils.langcase
-import com.rhseung.blueprint.util.Utils.titlecase
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup
 import net.minecraft.item.ItemGroup
 import net.minecraft.item.ItemStack
@@ -50,7 +49,7 @@ class BaseItemGroup(
     /**
      * The registry key of the item group.
      */
-    val registrykey = RegistryKey.of(RegistryKeys.ITEM_GROUP, id.toIdentifier())
+    val registrykey = RegistryKey.of(RegistryKeys.ITEM_GROUP, id.toIdentifier());
 
     /**
      * Registers the item group to the [Registry].
@@ -109,7 +108,7 @@ class BaseItemGroup(
          */
         internal val langs = LanguageTable()
 
-        fun lang(value: () -> Lang) {
+        fun lang(value: () -> Translation) {
             langs[value().language] = value().translation
         }
 

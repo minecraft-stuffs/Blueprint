@@ -1,9 +1,9 @@
 package com.rhseung.blueprint.example
 
-import com.rhseung.blueprint.data.AbstractModelProvider
-import com.rhseung.blueprint.data.BlockModelHandler
-import com.rhseung.blueprint.data.ItemModelHandler
-import com.rhseung.blueprint.data.ItemModelHandler.Companion.simple
+import com.rhseung.blueprint.datagen.provider.AbstractModelProvider
+import com.rhseung.blueprint.datagen.handler.BlockModelHandler
+import com.rhseung.blueprint.datagen.handler.ItemModelHandler
+import com.rhseung.blueprint.datagen.handler.ItemModelHandler.Companion.simple
 import com.rhseung.blueprint.registration.Registries
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput
 

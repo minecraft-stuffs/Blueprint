@@ -8,12 +8,12 @@ enum class Languages {
 
     companion object {
         fun forEach(action: (Languages) -> Unit) {
-            values().forEach(action)
+            entries.forEach(action)
         }
     }
 
     class LanguageTable(vararg langs: Pair<Languages, String>) {
-        private val table: MutableMap<Languages, String?> = Languages.values().associateWith { null }.toMutableMap()
+        private val table: MutableMap<Languages, String?> = entries.associateWith { null }.toMutableMap()
 
         init {
             langs.forEach { (lang, value) ->

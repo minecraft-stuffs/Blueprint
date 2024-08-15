@@ -19,11 +19,9 @@ class BaseBlockItem(
     val properties: BaseItem.Properties
 ) : BlockItem(block, properties.build()), IBaseKey {
 
-    override val id: Loc
-        get() = block.id
+    override val id: Loc = block.id
 
-    override val langs: Languages.LanguageTable
-        get() = block.langs
+    override val langs: Languages.LanguageTable = block.langs
 
     override fun register() {
         Registry.register(Registries.ITEM, id.toIdentifier(), this)

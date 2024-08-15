@@ -1,23 +1,23 @@
 package com.rhseung.blueprint.registration.key
 
-import com.rhseung.blueprint.api.ToolType
+import com.rhseung.blueprint.tool.ToolType
 import com.rhseung.blueprint.file.Loc
 import com.rhseung.blueprint.registration.IBaseKey
-import com.rhseung.blueprint.registration.Lang
+import com.rhseung.blueprint.registration.Translation
+import com.rhseung.blueprint.tool.Tier
+import com.rhseung.blueprint.util.Functional.ifNotNull
 import com.rhseung.blueprint.util.Languages
 import com.rhseung.blueprint.util.Languages.LanguageTable
-import com.rhseung.blueprint.util.Functional.ifNotNull
-import com.rhseung.blueprint.util.ToolLevel
+import com.rhseung.blueprint.tool.ToolLevel
 import com.rhseung.blueprint.util.Utils.langcase
-import com.rhseung.blueprint.util.Utils.titlecase
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents
+import net.minecraft.block.AbstractBlock.*
 import net.minecraft.block.Block
 import net.minecraft.block.BlockState
 import net.minecraft.block.MapColor
-import net.minecraft.block.enums.Instrument
+import net.minecraft.block.enums.NoteBlockInstrument
 import net.minecraft.block.piston.PistonBehavior
 import net.minecraft.entity.EntityType
-import net.minecraft.item.BlockItem
 import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
 import net.minecraft.resource.featuretoggle.FeatureFlag
@@ -25,8 +25,6 @@ import net.minecraft.sound.BlockSoundGroup
 import net.minecraft.util.DyeColor
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Direction
-import net.minecraft.util.math.MathHelper
-import net.minecraft.util.math.Vec3d
 import net.minecraft.world.BlockView
 import java.util.function.ToIntFunction
 
@@ -173,7 +171,7 @@ class BaseBlock(
         /**
          * Least tool level and type to break the block.
          */
-        internal var requiredToolLevel: ToolLevel = ToolType.NONE(0)
+        internal var requiredToolLevel: ToolLevel = ToolType.NONE(Tier.HAND)
 
         fun requiredToolLevel(value: () -> ToolLevel) {
             this.requiredToolLevel = value()
@@ -235,7 +233,6 @@ class BaseBlock(
 
         /**
          * Forces the block to be solid.
-         * // idk: what is this?
          */
         internal var forceSolid: Boolean = false
 
@@ -258,16 +255,16 @@ class BaseBlock(
          */
         internal var showBlockBreakParticle: Boolean = true
 
-        fun showBlockBreakParticle(value: () -> Boolean) {
+        fun breakParticle(value: () -> Boolean) {
             this.showBlockBreakParticle = value()
         }
 
         /**
          * Noteblock instrument of the block.
          */
-        internal var instrument: Instrument = Instrument.HARP
+        internal var instrument: NoteBlockInstrument = NoteBlockInstrument.HARP
 
-        fun instrument(value: () -> Instrument) {
+        fun instrument(value: () -> NoteBlockInstrument) {
             this.instrument = value()
         }
 
@@ -362,47 +359,10 @@ class BaseBlock(
         /**
          *
          */
-        internal var offsetter: Offsetter? = null
+        internal var offsetType: OffsetType = OffsetType.NONE
 
         fun offset(value: () -> OffsetType) {
-            this.offsetter = when (value()) {
-                OffsetType.XYZ -> Offsetter { state, world, pos ->
-                    val block = state.block
-                    val l = MathHelper.hashCode(pos.x, 0, pos.z)
-                    val d = (((l shr 4 and 0xFL).toFloat() / 15.0f).toDouble() - 1.0) * block.verticalModelOffsetMultiplier.toDouble()
-                    val f = block.maxHorizontalModelOffset
-                    val e = MathHelper.clamp(
-                        (((l and 0xFL).toFloat() / 15.0f).toDouble() - 0.5) * 0.5,
-                        (-f).toDouble(),
-                        f.toDouble()
-                    )
-                    val g = MathHelper.clamp(
-                        (((l shr 8 and 0xFL).toFloat() / 15.0f).toDouble() - 0.5) * 0.5,
-                        (-f).toDouble(),
-                        f.toDouble()
-                    )
-
-                    Vec3d(e, d, g)
-                }
-                OffsetType.XZ -> Offsetter { state, world, pos ->
-                    val block = state.block
-                    val l = MathHelper.hashCode(pos.x, 0, pos.z)
-                    val f = block.maxHorizontalModelOffset
-                    val d = MathHelper.clamp(
-                        (((l and 0xFL).toFloat() / 15.0f).toDouble() - 0.5) * 0.5,
-                        (-f).toDouble(),
-                        f.toDouble()
-                    )
-                    val e = MathHelper.clamp(
-                        (((l shr 8 and 0xFL).toFloat() / 15.0f).toDouble() - 0.5) * 0.5,
-                        (-f).toDouble(),
-                        f.toDouble()
-                    )
-
-                    Vec3d(d, 0.0, e)
-                }
-                else -> null
-            }
+            this.offsetType = value()
         }
 
         /**
@@ -410,7 +370,7 @@ class BaseBlock(
          */
         internal val langs = LanguageTable()
 
-        fun lang(value: () -> Lang) {
+        fun lang(value: () -> Translation) {
             langs[value().language] = value().translation
         }
 
@@ -435,10 +395,11 @@ class BaseBlock(
                 .postProcess(postProcessPredicate)
                 .emissiveLighting(emissiveLightingPredicate)
                 .requires(*requiredFeatures)
+                .offset(offsetType)
                 .apply {
                     if (!collidable)
                         noCollision()
-                    if (requiredToolLevel.type != ToolType.NONE)
+                    if (requiredToolLevel.hasType() && !requiredToolLevel.isHand())
                         requiresTool()
                     if (randomTicks)
                         ticksRandomly()

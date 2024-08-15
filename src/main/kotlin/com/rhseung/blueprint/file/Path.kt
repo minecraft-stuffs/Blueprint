@@ -57,8 +57,20 @@ class Path(val current: String) {
         return this / Path(subPath)
     }
 
+    override fun hashCode(): Int {
+        var result = current.hashCode()
+        result = 31 * result + (parent?.hashCode() ?: 0)
+        return result
+    }
+
     companion object {
         val root  = Path("")
+        val axe = Path("axe")
+        val hoe = Path("hoe")
+        val pickaxe = Path("pickaxe")
+        val shovel = Path("shovel")
+        val sword = Path("sword")
+        val shear = Path("shear")
 
         fun join(vararg paths: Path): Path {
             return paths.reduce { acc, path -> acc / path }

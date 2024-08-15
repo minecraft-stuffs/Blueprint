@@ -1,10 +1,8 @@
 package com.rhseung.blueprint.registration
 
-import com.rhseung.blueprint.Blueprint
-
 interface IModInit {
     /**
-     * Update [IBaseKey.langs] changed by [Lang] annotations.
+     * Update [IBaseKey.langs] changed by [Translation] annotations.
      */
     fun register() {
         this::class.java.declaredFields
@@ -12,7 +10,7 @@ interface IModInit {
             .forEach { field ->
                 field.isAccessible = true
                 field.annotations.forEach { annotation ->
-                    if (annotation is Lang) {
+                    if (annotation is Translation) {
                         val language = annotation.language
                         val translation = annotation.translation
                         val key = field.get(this) as IBaseKey

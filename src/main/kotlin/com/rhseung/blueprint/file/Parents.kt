@@ -3,8 +3,8 @@ package com.rhseung.blueprint.render.model
 import com.rhseung.blueprint.file.Path
 
 object Parents {
-        val item = Path("item")
-        val block = Path("block")
+    val item = Path("item")
+    val block = Path("block")
 
     val EMPTY = item/""
     val GENERATED = item/"generated"
@@ -109,7 +109,15 @@ object Parents {
         block/"template_chiseled_bookshelf_slot_bottom_right"
     val TEMPLATE_ANVIL = block/"template_anvil"
     val STEM_FRUIT = block/"stem_fruit"
-    fun STEM_GROWTH(n: Int) = block/"stem_growth$n"
+//    fun STEM_GROWTH(n: Int) = block/"stem_growth$n"
+    val STEM_GROWTH_0 = block/"stem_growth_0"
+    val STEM_GROWTH_1 = block/"stem_growth_1"
+    val STEM_GROWTH_2 = block/"stem_growth_2"
+    val STEM_GROWTH_3 = block/"stem_growth_3"
+    val STEM_GROWTH_4 = block/"stem_growth_4"
+    val STEM_GROWTH_5 = block/"stem_growth_5"
+    val STEM_GROWTH_6 = block/"stem_growth_6"
+    val STEM_GROWTH_7 = block/"stem_growth_7"
     val CROP = block/"crop"
     val TEMPLATE_FARMLAND = block/"template_farmland"
     val TEMPLATE_FIRE_FLOOR = block/"template_fire_floor"

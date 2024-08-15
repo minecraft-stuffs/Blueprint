@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "blueprint:block/example_ore"
+    }
+  }
+}

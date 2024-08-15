@@ -1,0 +1,6 @@
+{
+  "block.blueprint.example_ore": "Example Ore",
+  "blueprint.example_group": "Example Group",
+  "item.blueprint.blueprint": "Blueprint",
+  "item.blueprint.example_item": "Example Item"
+}

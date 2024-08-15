@@ -28,13 +28,12 @@ object Utils {
         // gradle.properties 파일에서 modid를 가져옴
         val gradleProperties = projectRoot.resolve("gradle.properties")
         if (gradleProperties.toFile().exists()) {
-            return gradleProperties.toFile().readLines().find { it.startsWith("mod_id=") }!!.substringAfter("mod_id=")
+            return gradleProperties.toFile().readLines()
+                .find { "modid" in it.replace("_", "").lowercase() }
+                ?.substringAfter("=")
+                ?.trim() ?: throw IllegalStateException("Could not find modid");
         }
 
-        throw IllegalStateException("Could not find modid")
-
-//        val destination = projectRoot.resolve("src/main/resources/fabric.mod.json")
-//
-//        return JsonParser.parseString(destination.toFile().readText()).asJsonObject.get("id").asString
+        throw IllegalStateException("Could not find gradle.properties")
     }
 }
